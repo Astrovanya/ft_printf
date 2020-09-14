@@ -6,7 +6,7 @@
 /*   By: mleann <mleann@student.21-school.ru>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/09 16:59:54 by mleann            #+#    #+#             */
-/*   Updated: 2020/07/16 21:01:46 by mleann           ###   ########.fr       */
+/*   Updated: 2020/07/21 18:26:23 by mleann           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,80 +14,54 @@
 
 int		ft_printf(const char *line, ...)
 {
-	t_list	*parsed;
-	va_list	print;
+	t_list	*container;
 	char	*tmp;
-	int		len;
+	int		ret;
+	va_list	arg;
 
-	len = 0;
-	tmp = (char *)line;
-	parsed = new_struct(tmp);
-	va_start(print, line);
-	len = print_struct(print, parsed, 0);
-	va_end(print);
-	ft_free_struct(&parsed);
-	return (len);
+	ret = 0;
+	tmp = (char*)line;
+	container = new_struct(tmp);
+	va_start(arg, line);
+	ret = ft_printer(arg, container, 0);
+	va_end(arg);
+	ft_free_struct(&container);
+	return (ret);
 }
 
-int		print_struct(va_list print, t_list *parsed, int ret)
+int		ft_printer(va_list print, t_list *container, int ret)
 {
-	while (parsed != NULL)
+	while (container != NULL)
 	{
-		if (parsed->width == -1)
-			parsed->width = va_arg(print, int);
-		if (parsed->prec == -1)
-			parsed->prec = va_arg(print, int);
-		if (parsed->pretext)
-			ret += ft_putstr(parsed->pretext);
-		if (parsed->type)
-			ret += type_scun(print, parsed, ret);
-		parsed = parsed->next;
+		if (container->star_w)
+			container->width = va_arg(print, int);
+		if (container->star_prec == -1)
+			container->star_prec = va_arg(print, int);
+		if (container->pretext)
+			ret += ft_putstr(container->pretext);
+		ret += ft_print_from_struct(print, container);
+		container = container->next;
 	}
 	return (ret);
 }
 
-int		type_scun(va_list print, t_list *parsed, int res)
+int		ft_print_from_struct(va_list print, t_list *container)
 {
-	if (parsed->type == 'i' || parsed->type == 'd')
-		res += ft_print_i_d(va_arg(print, int), *parsed);
-	else if (parsed->type == 'u')
-		res += ft_print_u(va_arg(print, unsigned int), *parsed);
-	else if (parsed->type == 'c')
-		res += ft_print_c(va_arg(print, int), *parsed);
-	else if (parsed->type == 's')
-		res += ft_print_s(va_arg(print, char*), *parsed);
-	else if (parsed->type == 'p')
-		res += ft_print_p((size_t)va_arg(print, void *), *parsed);
-	else if (parsed->type == 'x')
-		res += ft_print_x(va_arg(print, int), *parsed);
-	else if (parsed->type == 'X')
-		res += ft_print_xx(va_arg(print, int), *parsed);
-	//else if (parsed->type == '%')
-		//res += ft_print_persent(va_arg(print, int), &parsed);
-	return res;
-}
+	int	ret;
 
-void	ft_free_struct(t_list **pars_form)
-{
-	t_list	*tmp;
-
-	if (!pars_form || !*pars_form)
-		return ;
-	while (*pars_form != NULL)
-	{
-		tmp = *pars_form;
-		if ((*pars_form)->pretext)
-			free((*pars_form)->pretext);
-		*pars_form = (*pars_form)->next;
-		free(tmp);
-		tmp = NULL;
-	}
+	ret = 0;
+	if ((container->type > 0 && container->type <= 2) ||
+			container->type == 6)
+		ret += ft_print_num(va_arg(print, int), container);
+	if (container->type == 3)
+		ret += ft_print_u(va_arg(print, unsigned int), container);
+	if (container->type > 3 && container->type <= 5)
+		ret += ft_print_num(va_arg(print, size_t), container);
+	if (container->type == 7)
+		ret += ft_print_s(va_arg(print, char*), container);
+	if (container->type == 8)
+		ret += ft_print_p(va_arg(print, size_t), container);
+	if (container->type == 9)
+		ret += ft_print_percent("%", container);
+	return (ret);
 }
-/*
-int main()
-{
-	ft_printf("%10.5d\n",6);
-	ft_printf("%10.3s\n","Hello");
-	return (0);
-}  
-*/

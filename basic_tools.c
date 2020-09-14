@@ -6,136 +6,92 @@
 /*   By: mleann <mleann@student.21-school.ru>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/13 15:57:38 by mleann            #+#    #+#             */
-/*   Updated: 2020/07/15 15:05:13 by mleann           ###   ########.fr       */
+/*   Updated: 2020/07/21 18:17:38 by mleann           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_printflib.h"
 
+int		ft_putchar(int c)
+{
+	if (c)
+		return (write(1, &c, 1));
+	return (0);
+}
+
 int		ft_putstr(char *s)
 {
-	size_t i;
+	int i;
+	int	ret;
 
 	i = 0;
-	while (s[i])
-	{
-		ft_putchar(s[i]);
-		i++;
-	}
-	ft_putchar('\0');
-	return (i);
-}
-
-int		ft_putchar(char c)
-{
-	write(0, &c, 1);
-	return (1);
-}
-
-int		ft_atoi(const char *num)
-{
-	int			i;
-	int			sign;
-	long int	res;
-
-	sign = 1;
-	res = 0;
-	i = 0;
-	while (((num[i] >= 9 && num[i] <= 13) || num[i] == ' ') && num)
-		i++;
-	if (num[i] == '-')
-		sign = -1;
-	if (num[i] == '-' || num[i] == '+')
-		i++;
-	while (num[i] >= '0' && num[i] <= '9')
-	{
-		if ((res * 10) < res)
-			return ((sign < 0) ? 0 : -1);
-		res = res * 10 + (num[i++] - '0');
-	}
-	return ((int)(res * sign));
-}
-
-char	*ft_strdup(const char *s1)
-{
-	int		i;
-	int		l;
-	char	*str;
-
-	l = ft_strlen(s1);
-	str = malloc(sizeof(*str) * (l + 1));
-	if (str == NULL)
+	if (!s)
 		return (0);
+	while (s[i])
+		i++;
+	ret = write(1, s, i);
+	return (ret);
+}
+
+int		ft_atoi(char *str)
+{
+	int				i;
+	int				znak;
+	unsigned long	rez;
+
 	i = 0;
-	while (i < l)
+	znak = 1;
+	rez = 0;
+	while ((str[i] >= 9 && str[i] <= 13) || str[i] == 32 || str[i] == 127)
+		i++;
+	if (str[i] == '-')
+		znak = -1;
+	if (str[i] == '-' || str[i] == '+')
+		i++;
+	while (str[i] >= '0' && str[i] <= '9')
 	{
-		str[i] = s1[i];
+		if ((rez * 10 + (str[i] - '0')) < rez)
+			return (znak == 1 ? -1 : 0);
+		rez = (rez * 10) + (str[i] - '0');
 		i++;
 	}
-	str[i] = '\0';
-	return (str);
+	rez = rez * znak;
+	return ((int)rez);
+}
+
+char	*ft_strjoin(char *l1, char *l2)
+{
+	char	*buf;
+	int		i;
+
+	if (!l1 && !l2)
+		return (NULL);
+	buf = (char*)malloc((ft_strlen(l1) + ft_strlen(l2) + 1) * sizeof(char));
+	if (!buf)
+		return (NULL);
+	i = 0;
+	while (l1 && *l1)
+		buf[i++] = *l1++;
+	while (l2 && *l2)
+		buf[i++] = *l2++;
+	buf[i] = '\0';
+	return (buf);
 }
 
 void	*ft_calloc(size_t num, size_t size)
 {
-	void *ptr;
-
-	ptr = malloc(num * size);
-	if (ptr)
-		ft_bzero(ptr, (num * size));
-	return (ptr);
-}
-
-size_t		ft_strlen(const char *s)
-{
+	char	*dest;
 	size_t	i;
 
 	i = 0;
-	while (s[i])
-		i++;
-	return (i);
-}
-void	ft_bzero(void *s, size_t n)
-{
-	ft_memset(s, 0, n);
-}
-void	*ft_memset(void *s, int c, size_t n)
-{
-	size_t i;
-
-	i = 0;
-	while (n > i)
-	{
-		*((char *)s + i) = (unsigned char)c;
-		i++;
-	}
-	return (s);
-}
-char	*ft_itoa(int n)
-{
-	size_t	len;
-	char	*res;
-	int		negative;
-	int		tmp;
-
-	if (n == -2147483648)
-		return (ft_strdup("-2147483648"));
-	tmp = n;
-	len = 0;
-	while (tmp /= 10)
-		len++;
-	negative = n < 0 ? 1 : 0;
-	if (n < 0 && (negative = 1))
-		n = -n;
-	if (!(res = (char *)malloc(sizeof(char) * ((len += negative + 1) + 1))))
+	dest = (char*)malloc(num * size);
+	if (!dest)
 		return (NULL);
-	res[len] = '\0';
-	while (len--)
+	while (i < ((num - 1) * size))
 	{
-		res[len] = ((n % 10) + 48);
-		n /= 10;
+		dest[i] = 0;
+		i++;
 	}
-	if (negative)
-		res[0] = '-';
-	return (res);
+	dest[i] = '\0';
+	return (dest);
 }

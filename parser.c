@@ -6,132 +6,117 @@
 /*   By: mleann <mleann@student.21-school.ru>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/13 15:44:00 by mleann            #+#    #+#             */
-/*   Updated: 2020/07/16 23:30:20 by mleann           ###   ########.fr       */
+/*   Updated: 2020/07/21 18:21:24 by mleann           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_printflib.h"
 
-char		type_parser(char **format)
-{
-	char	*t;
-
-	if (!format || !*format || !**format)
-		return (0);
-	t = *format;
-	if (*t == 'd' || *t == 'i' || *t == 'u' || *t == 'c' || *t == 's' ||
-			*t == 'p' || *t == 'x' || *t == 'X' || *t == '%')
-	{
-		*format = *format + 1;
-		return (*t);
-	}
-	return (0);
-}
-
-int		prec_parser(char **format)
+char	*text_parser(char **line)
 {
 	int		i;
-	char	*tmp;
+	char	*text;
 
-	if (!format || !*format || !**format)
+	if (!line || !*line || !**line)
 		return (0);
-	tmp = ft_strdup(*format);
 	i = 0;
-	if (tmp && tmp[i] == '.')
+	text = ft_strdup(*line);
+	while (text && text[i])
 	{
-		i++;
-	}
-	if (tmp && tmp[i])
-	{
-		if (tmp[i] == '*')
+		if (text[i] == '%')
 		{
-			*format = *format + 1;
-			return (-1);
+			text[i] = '\0';
+			*line = *line + i + 1;
+			if (i == 0)
+			{
+				free_buf(&text);
+				return (NULL);
+			}
+			else
+				return (text);
 		}
-		while (tmp[i] >= '0' && tmp[i] <= '9')
-			i++;
-		*format = *format + i;
-		return (ft_atoi(++tmp));
-	}
-	return (0);
-}
-
-int		wigth_parser(char **format)
-{
-	int		i;
-	char	*tmp;
-
-	if (!format || !*format || !**format)
-		return (0);
-	i = 0;
-	tmp = *format;
-	while (tmp[i] >= '0' && tmp[i] <= '9')
-	{
 		i++;
-		//*format = *format + i;
-		//return (ft_atoi(tmp));
 	}
-	if (tmp && tmp[i] == '*')
-	{
-		*format = *format + i;
-		return (-1);
-	}
-	*format = *format + i;
-	return (ft_atoi(tmp));
+	*line = *line + i;
+	return (text);
 }
 
-// возвращает 1 если минус и 2 если ноль
 int		flag_parser(char **line)
 {
 	int		i;
 	char	*tmp;
-	int		zero;
+	int		rez;
 	int		minus;
+	int		zero;
 
 	i = 0;
+	rez = 0;
 	zero = 0;
 	minus = 0;
 	if (!line || !*line || !**line)
 		return (0);
 	tmp = *line;
-	while (tmp && (tmp[i] == '-' || tmp[i] == '0'))
+	if (tmp && (*tmp == '-' || *tmp == '0'))
+		while (*tmp && (tmp[i] == '-' || tmp[i] == '0'))
 		{
-			if (tmp[i] == '-')
-				minus++;
-			if (tmp[i] == '0')
-				zero++;
+			if (tmp[i] == '-' && minus++ == 0)
+				rez = rez + 1 - 2 * zero;
+			if (tmp[i] == '0' && zero++ == 0 && minus == 0)
+				rez = rez + 2;
 			i++;
 		}
 	*line = *line + i;
-	return (returner(minus, zero));
+	return (rez);
 }
 
-int		returner(int minus, int zero)
+int		wigth_parser(char **line)
 {
-	if (minus > 0)
-		return (1);
-	else if (zero > 0)
-		return (2);
-	else
-		return (0);
-}
+	int		i;
+	char	*tmp;
 
-char	*text_parser(char **line)
-{
-	int i;
-	char *tmp;
-
-	if (!line || !*line)
+	if (!line || !*line || !**line)
 		return (0);
-	tmp = ft_strdup(*line);
 	i = 0;
-	while (tmp[i] && tmp[i] != '%')
-		i++;
-	if (tmp[i] == '%')
+	tmp = *line;
+	if (tmp && *tmp >= '0' && *tmp <= '9')
 	{
-		tmp[i] = '\0';
-		i++;
+		while (tmp[i] >= '0' && tmp[i] <= '9')
+			i++;
+		*line = *line + i;
+		return (ft_atoi(tmp));
 	}
-	*line = *line + i;
-	return (tmp);
+	return (0);
+}
+
+int		star_w_parser(char **line)
+{
+	char	*tmp;
+
+	if (!line || !*line || !**line)
+		return (0);
+	tmp = *line;
+	if (tmp && *tmp == '*')
+	{
+		*line = *line + 1;
+		return (1);
+	}
+	return (0);
+}
+
+int		prec_parser(char **line)
+{
+	int		i;
+	char	*tmp;
+
+	if (!line || !*line || !**line)
+		return (0);
+	tmp = *line;
+	i = 0;
+	if (tmp && tmp[i] == '.')
+	{
+		i++;
+		*line = *line + i;
+		return (1);
+	}
+	return (0);
 }

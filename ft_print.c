@@ -6,272 +6,130 @@
 /*   By: mleann <mleann@student.21-school.ru>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/07/13 20:41:37 by mleann            #+#    #+#             */
-/*   Updated: 2020/07/16 23:34:08 by mleann           ###   ########.fr       */
+/*   Updated: 2020/07/21 18:26:41 by mleann           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_printflib.h"
 
-int		ft_print_u(unsigned int n, t_list struc)
+int	ft_print_num(size_t argint, t_list *container)
 {
-	int res;
-	int zeros;
-	int max;
-	res = 0;
-	zeros = struc.prec - ft_strlen(ft_itoa(n));
-	max = ft_strlen(ft_itoa(n)) > struc.prec ? ft_strlen(ft_itoa(n)) : struc.prec;
-	max = struc.width - max;
-	while (max-- > 0 && struc.flag == 0)
-		res += ft_putchar(' ');
-	while (max-- > 0 && struc.flag == 2 && struc.prec == 0)
-		res += ft_putchar('0');
-	while (zeros-- > 0)
-		res += ft_putchar('0');
-	res += ft_putstr(ft_itoa(n));
-	while (max-- > 0 && struc.flag == 1)
-		res += ft_putchar(' ');
-	return (res);
+	char	*number;
+
+	if (container->width < 0)
+	{
+		container->width = -1 * container->width;
+		container->flag = 1;
+	}
+	if (container->type == 5)
+		number = ft_convert_x(argint);
+	else if (container->type == 4)
+		number = ft_convert_xx(argint);
+	else if (container->type == 6)
+		return (ft_print_c(argint, container));
+	else
+		number = ft_itoa(argint);
+	if ((container->prec == 0 || container->prec < 0) && \
+			container->flag == 2)
+		number = ft_is_null(&number, container->width);
+	if (container->prec && container->prec >= 0)
+		number = ft_prec(&number, container->star_prec);
+	if (container->flag != 1 && container->width)
+		number = ft_width(&number, container->width);
+	if (container->flag == 1 && container->width)
+		number = ft_width_right(&number, container->width);
+	return (ft_putstr(number) + free_buf(&number));
 }
 
-int		ft_print_i_d(int n, t_list struc)
+int	ft_print_u(unsigned long long argint, t_list *container)
 {
-	int res;
-	int zeros;
-	int max;
+	char	*number;
+	int		ret;
 
-	res = 0;
-	zeros = struc.prec - ft_strlen(ft_itoa(n));
-	max = ft_strlen(ft_itoa(n)) > struc.prec ? ft_strlen(ft_itoa(n)) : struc.prec;
-	max = struc.width - max;
-	while (max > 0 && struc.flag == 0)
-	{
-		res += ft_putchar(' ');
-		max--;
-	}
-	while (max > 0 && struc.flag == 2 && struc.prec == 0)
-	{
-		res += ft_putchar('0');
-		max--;
-	}
-	while (zeros-- > 0)
-		res += ft_putchar('0');
-	res += ft_putstr(ft_itoa(n));
-	while (max > 0 && struc.flag == 1)
-	{
-		res += ft_putchar(' ');
-		max--;
-	}
-	return (res);
+	number = ft_itoa_long(argint);
+	if ((container->prec == 0 || container->star_prec < 0) && \
+			container->flag == 2)
+		number = ft_is_null(&number, container->width);
+	if (container->prec && container->star_prec >= 0)
+		number = ft_prec(&number, container->star_prec);
+	if (container->flag != 1 && container->width)
+		number = ft_width(&number, container->width);
+	if (container->flag == 1 && container->width)
+		number = ft_width_right(&number, container->width);
+	ret = ft_putstr(number);
+	if (number)
+		free(number);
+	return (ret);
 }
 
-int		ft_print_p(size_t p, t_list struc)
+int	ft_print_s(char *str, t_list *container)
 {
+	int		i;
+	char	*tmp;
+
+	tmp = ft_strdup(str);
+	if (!tmp)
+		tmp = ft_strdup("(null)");
+	if (container->width < 0)
+	{
+		container->width = -1 * container->width;
+		container->flag = 1;
+	}
+	if (container->prec && container->star_prec >= 0)
+		tmp = ft_prec_s(&tmp, container->star_prec);
+	if ((container->prec == 0 || container->star_prec <= 0) && \
+			container->flag == 2)
+		tmp = ft_is_null(&tmp, container->width);
+	if (!container->flag && container->width)
+		tmp = ft_width(&tmp, container->width);
+	if (container->flag == 1 && container->width)
+		tmp = ft_width_right(&tmp, container->width);
+	i = ft_putstr(tmp);
+	free_buf(&tmp);
+	return (i);
+}
+
+int	ft_print_p(size_t pointer, t_list *container)
+{
+	char	*number;
+	int		ret;
+	char	*buf;
+
+	buf = ft_convert_p(pointer);
+	number = ft_strjoin("0x", buf);
+	free_buf(&buf);
+	if (container->prec == 0 && container->flag == 2)
+		number = ft_is_null(&number, container->width);
+	if (container->prec && pointer == 0)
+		number = ft_strdup("0x");
+	if (!container->flag && container->width)
+		number = ft_width(&number, container->width);
+	if (container->flag == 1 && container->width)
+		number = ft_width_right(&number, container->width);
+	ret = ft_putstr(number);
+	free_buf(&number);
+	return (ret);
+}
+
+int	ft_print_c(size_t argint, t_list *container)
+{
+	int		count;
 	int		len;
-	size_t	p2;
-	char	*line;
-	char	*result;
 
-	len = 1;
-	p2 = p;
-	while (p2 /= 16)
-		len++;
-	if ((result = (char*)malloc(sizeof(char) * (len + 1))) == NULL)
-		return (0);
-	line = ft_strdup("0123456789abcdef");
-	result[len] = '\0';
-	while (len-- > 0)
+	count = 0;
+	if (!container->width)
+		count += write(1, &argint, 1);
+	if ((len = container->width) && container->flag == 0)
 	{
-		result[len] = line[p % 16];
-		p /= 16;
+		while (--len > 0)
+			count += ft_putchar(' ');
+		count += write(1, &argint, 1);
 	}
-	len = ft_strlen(result);
-	ft_putstr("0x");
-	ft_putstr(result);
-	return (len);
-}
-
-int		ft_print_x(unsigned int x, t_list struc)
-{
-	char *str;
-	int res;
-	int zeros;
-	int max;
-
-	str = ft_x_convert(x);
-	res = 0;
-	zeros = struc.prec - ft_strlen(str);
-	max = ft_strlen(str) > struc.prec ? ft_strlen(str) : struc.prec;
-	max = struc.width - max;
-	while (max-- > 0 && struc.flag == 0)
-		res += ft_putchar(' ');
-	while (max-- > 0 && struc.flag == 2 && struc.prec == 0)
-		res += ft_putchar('0');
-	while (zeros-- > 0)
-		res += ft_putchar('0');
-	res += ft_putstr(str);
-	while (max-- > 0 && struc.flag == 1)
-		res += ft_putchar(' ');
-	return (res);
-}
-
-char	*ft_x_convert(unsigned int number)
-{
-	unsigned long int	tmp;
-	int					i;
-	char				*num;
-
-	tmp = number;
-	i = 0;
-	if (tmp == 0)
-		i++;
-	while (tmp != 0)
+	if ((len = container->width) && container->flag == 1)
 	{
-		tmp = tmp / 16;
-		i++;
+		count += write(1, &argint, 1);
+		while (--len > 0)
+			count += ft_putchar(' ');
 	}
-	num = ft_calloc(i + 1, sizeof(char));
-	tmp = number;
-	while (i > 0 && tmp >= 0)
-	{
-		num[i - 1] = (((tmp % 16) > 9) ? tmp % 16 - 10 + 'a' : tmp % 16 + '0');
-		tmp = tmp / 16;
-		i--;
-	}
-	if (i > 0)
-		num[i - 1] = number;
-	return (num);
-}
-
-int		ft_print_xx(unsigned int x, t_list struc)
-{
-	char *str;
-	int res;
-	int zeros;
-	int max;
-
-	str = ft_xx_convert(x);
-	res = 0;
-	zeros = struc.prec - ft_strlen(str);
-	max = ft_strlen(str) > struc.prec ? ft_strlen(str) : struc.prec;
-	max = struc.width - max;
-	while (max-- > 0 && struc.flag == 0)
-		res += ft_putchar(' ');
-	while (max-- > 0 && struc.flag == 2 && struc.prec == 0)
-		res += ft_putchar('0');
-	while (zeros-- > 0)
-		res += ft_putchar('0');
-	res += ft_putstr(str);
-	while (max-- > 0 && struc.flag == 1)
-		res += ft_putchar(' ');
-	return (res);
-}
-
-char	*ft_xx_convert(unsigned int number)
-{
-	unsigned long int	tmp;
-	int					i;
-	char				*num;
-
-	tmp = number;
-	i = 0;
-	if (tmp == 0)
-		i++;
-	while (tmp != 0)
-	{
-		tmp = tmp / 16;
-		i++;
-	}
-	num = ft_calloc(i + 1, sizeof(char));
-	tmp = number;
-	while (i > 0 && tmp >= 0)
-	{
-		num[i - 1] = (((tmp % 16) > 9) ? tmp % 16 - 10 + 'A' : tmp % 16 + '0');
-		tmp = tmp / 16;
-		i--;
-	}
-	if (i > 0)
-		num[i - 1] = number;
-	return (num);
-}
-
-int		ft_print_c(size_t c, t_list struc)
-{
-	int		res;
-	int		len;
-	int i;
-
-	res = 0;
-//	if (!struc.width && struc.width == 1)
-//		res += write(1, &c, 1);
-	if (struc.width > 1)
-  	{
- 		i = struc.width - 1;
-   		while (i > 0 && struc.flag == 0)
-		{
-     		len += ft_putchar(' ');
-			i--;
-		}
-   		ft_putchar(c);
-   		while (i && struc.flag == 1)
-		{
-     		len += ft_putchar(' ');
-			i--;
-		}
-  	}
-  	else
- 	ft_putchar(c);
-	return (res);
-}
-/*
-int		ft_print_s(char *s, t_list struc)
-{
-	int len;
-	int i;
-	char *tmp;
-
-	tmp = ft_strdup(s);
-	if (struc.prec && struc.prec < ft_strlen(tmp))
-		tmp[struc.prec] = '\0';
-	len = ft_strlen(tmp);
-	i = 0;
-	if (struc.width)
-		i = struc.width - len;
-	while (i-- > 0 && struc.flag == 0)
-		len += ft_putchar(' ');
-	ft_putstr(tmp);
-	while (i-- && struc.flag == 1)
-		len += ft_putchar(' ');
-	return (len);
-}
-*/
-int		ft_print_s(char *s, t_list struc)
-{
-	int len;
-	int i;
-	char *tmp;
-	if (!s)
-		return (0);
-	tmp = ft_strdup(s);
-	if (struc.prec && struc.prec < ft_strlen(tmp))
-    	tmp[struc.prec] = '\0';
-  	len = ft_strlen(tmp);
-  	if (struc.width > len)
-  	{
- 		i = struc.width - len;
-   		while (i > 0 && struc.flag == 0)
-		{
-     		len += ft_putchar(' ');
-			i--;
-		}
-   		ft_putstr(tmp);
-		
-   		while (i && struc.flag == 1)
-		{
-     		len += ft_putchar(' ');
-			i--;
-		}
-  	}
-  	else
- 	ft_putstr(tmp);
- 	return (len);
+	return (count);
 }
